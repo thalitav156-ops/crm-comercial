@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../services/supabase'
-import ImportarExcel from '../components/ImportarExcel'
+import { supabase } from './services/supabase'
+import ImportarExcel from './components/ImportarExcel'
 
 export default function Home() {
 
@@ -12,7 +12,7 @@ export default function Home() {
   const [selecionados, setSelecionados] =
     useState<number[]>([])
 
-  const [busca, setBusca] =
+  const [busca, setBusca] 
     useState('')
 
   const [filtroStatus, setFiltroStatus] =
