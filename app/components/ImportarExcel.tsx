@@ -1,13 +1,28 @@
-import { createClient } from '@supabase/supabase-js'
+'use client'
 
-const supabaseUrl =
-  'https://ozisptgftaagdocvzfln.supabase.co'
+export default function ImportarExcel() {
 
-const supabaseAnonKey =
-  'sb_publishable_rR_kd-dAjyAStwQO8-yu1A_C8deumDG'
+  return (
+    <div
+      style={{
+        background: '#0f172a',
+        padding: '30px',
+        borderRadius: '20px',
+        marginTop: '20px',
+        textAlign: 'center',
+        border: '1px solid #1e293b'
+      }}
+    >
 
-export const supabase =
-  createClient(
-    supabaseUrl,
-    supabaseAnonKey
+      <p
+        style={{
+          color: '#94a3b8',
+          fontSize: '16px'
+        }}
+      >
+        Importador de Excel ativo 🚀
+      </p>
+
+    </div>
   )
+}
