@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../services/supabase'
+import { supabase } from './services/supabase'
 import ImportarExcel from './components/ImportarExcel'
 
 export default function Home() {
