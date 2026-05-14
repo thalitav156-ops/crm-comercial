@@ -1,9 +1,7 @@
 'use client'
 
 export default function LeadPage() {
-
   return (
-
     <div
       style={{
         minHeight: '100vh',
@@ -13,19 +11,15 @@ export default function LeadPage() {
         fontFamily: 'Arial'
       }}
     >
-
       <h1
         style={{
-          fontSize: '40px',
-          marginBottom: '20px'
+          fontSize: '40px'
         }}
       >
         CRM Comercial Giotto
       </h1>
 
-      <p>CRM funcionando com sucesso.</p>
-
+      <p>CRM funcionando.</p>
     </div>
-
   )
 }

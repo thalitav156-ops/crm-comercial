@@ -3,9 +3,7 @@
 import Link from 'next/link'
 
 export default function Home() {
-
   return (
-
     <div
       style={{
         minHeight: '100vh',
@@ -15,23 +13,19 @@ export default function Home() {
         alignItems: 'center'
       }}
     >
-
       <Link
-        href='/lead'
+        href="/lead"
         style={{
           background: '#2563eb',
           color: 'white',
           padding: '20px 40px',
           borderRadius: '20px',
           textDecoration: 'none',
-          fontSize: '24px',
-          fontWeight: 'bold'
+          fontSize: '24px'
         }}
       >
         Abrir CRM Comercial
       </Link>
-
     </div>
-
   )
 }
