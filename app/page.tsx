@@ -17,14 +17,17 @@ export default function Home() {
         href="/lead"
         style={{
           background: '#2563eb',
+          padding: '20px 50px',
+          borderRadius: '18px',
           color: 'white',
-          padding: '20px 40px',
-          borderRadius: '20px',
           textDecoration: 'none',
-          fontSize: '24px'
+          fontSize: '32px',
+          fontWeight: 'bold',
+          boxShadow: '0 0 30px rgba(37,99,235,0.4)',
+          transition: '0.3s'
         }}
       >
-        Abrir CRM Comercial
+        Entrar no VYNTRA
       </Link>
     </div>
   )
