@@ -1,29 +1,32 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../services/supabase'
-import ImportarExcel from '../components/ImportarExcel'
+import { supabase } from './services/supabase'
+import ImportarExcel from './components/ImportarExcel'
 
 export default function Home() {
 
-  const [clientes, setClientes] =
-    useState<any[]>([])
+  const [clientes, setClientes] = useState<any[]>([])
+  const [selecionados, setSelecionados] = useState<number[]>([])
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('Todos')
+  const [logs, setLogs] = useState<any[]>([])
+  const [enviando, setEnviando] = useState(false)
 
-  const [busca, setBusca] =
-    useState('')
+  const [mensagemCampanha, setMensagemCampanha] = useState(`Olá {{cliente}}, tudo bem? 😊
 
-  const [filtroStatus, setFiltroStatus] =
-    useState('Todos')
+Estamos entrando em contato para apresentar novamente nosso catálogo atualizado e verificar novas oportunidades comerciais.
+
+Posso lhe enviar nosso catálogo atualizado?
+
+Fico à disposição 🚀`)
 
   async function buscarClientes() {
 
-    const { data } =
-      await supabase
-        .from('clientes')
-        .select('*')
-        .order('id', {
-          ascending: false
-        })
+    const { data } = await supabase
+      .from('clientes')
+      .select('*')
+      .order('id', { ascending: false })
 
     if (data) {
       setClientes(data)
@@ -31,17 +34,33 @@ export default function Home() {
   }
 
   useEffect(() => {
+
     buscarClientes()
 
-    const interval =
-      setInterval(() => {
-        buscarClientes()
-      }, 3000)
+    const interval = setInterval(() => {
+      buscarClientes()
+    }, 3000)
 
-    return () =>
-      clearInterval(interval)
+    return () => clearInterval(interval)
 
   }, [])
+
+  function toggleSelecionado(id: number) {
+
+    if (selecionados.includes(id)) {
+
+      setSelecionados(
+        selecionados.filter(item => item !== id)
+      )
+
+    } else {
+
+      setSelecionados([
+        ...selecionados,
+        id
+      ])
+    }
+  }
 
   async function atualizarStatus(
     id: number,
@@ -50,20 +69,15 @@ export default function Home() {
 
     await supabase
       .from('clientes')
-      .update({
-        status
-      })
+      .update({ status })
       .eq('id', id)
 
     buscarClientes()
   }
 
-  async function excluirCliente(
-    id: number
-  ) {
+  async function excluirCliente(id: number) {
 
-    const confirmar =
-      confirm('Excluir lead?')
+    const confirmar = confirm('Excluir lead?')
 
     if (!confirmar) return
 
@@ -81,23 +95,65 @@ export default function Home() {
   ) {
 
     const numero =
-      telefone.replace(/\D/g, '')
+      telefone?.replace(/\D/g, '')
 
     const mensagem =
-`Olá ${empresa}, tudo bem?
-
-Sentimos sua falta por aqui 😊
-
-Gostaríamos de apresentar novamente nossa linha de produtos e verificar oportunidades para retomarmos nossa parceria.
-
-Posso lhe enviar nosso catálogo atualizado e melhores condições disponíveis no momento.
-
-Fico à disposição 🚀`
+      mensagemCampanha.replace(
+        '{{cliente}}',
+        empresa
+      )
 
     window.open(
       `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`,
       '_blank'
     )
+  }
+
+  async function dispararCampanha() {
+
+    if (selecionados.length === 0) {
+      alert('Selecione clientes')
+      return
+    }
+
+    setEnviando(true)
+
+    for (let i = 0; i < selecionados.length; i++) {
+
+      const cliente =
+        clientes.find(
+          c => c.id === selecionados[i]
+        )
+
+      if (!cliente) continue
+
+      abrirWhatsapp(
+        cliente.telefone,
+        cliente.razao_social
+      )
+
+      await atualizarStatus(
+        cliente.id,
+        'Contatado'
+      )
+
+      setLogs(prev => [
+        {
+          empresa: cliente.razao_social,
+          telefone: cliente.telefone,
+          data: new Date().toLocaleString()
+        },
+        ...prev
+      ])
+
+      await new Promise(resolve =>
+        setTimeout(resolve, 5000)
+      )
+    }
+
+    setEnviando(false)
+
+    alert('Campanha disparada')
   }
 
   const clientesFiltrados =
@@ -116,48 +172,30 @@ Fico à disposição 🚀`
         cliente.telefone
           ?.includes(busca)
 
-        ||
-
-        cliente.cnpj
-          ?.includes(busca)
-
       const statusMatch =
 
         filtroStatus === 'Todos'
-
         ||
+        cliente.status === filtroStatus
 
-        cliente.status ===
-          filtroStatus
-
-      return (
-        buscaMatch &&
-        statusMatch
-      )
+      return buscaMatch && statusMatch
     })
 
-  const totalLeads =
-    clientes.length
+  const totalLeads = clientes.length
 
   const novos =
     clientes.filter(
-      c =>
-        c.status ===
-        'Novo Lead'
+      c => c.status === 'Novo Lead'
     ).length
 
   const negociacao =
     clientes.filter(
-      c =>
-        c.status ===
-        'Negociação'
+      c => c.status === 'Negociação'
     ).length
 
   const fechados =
     clientes.filter(
-      c =>
-        c.status ===
-        'Fechado'
+      c => c.status === 'Fechado'
     ).length
 
   return (
@@ -169,16 +207,14 @@ Fico à disposição 🚀`
       </h1>
 
       <p style={subtitle}>
-        Gestão inteligente de clientes e leads
+        Central Inteligente de Reativação Comercial
       </p>
-
-      {/* DASHBOARD */}
 
       <div style={dashboardGrid}>
 
         <div style={cardBlue}>
           <h2>{totalLeads}</h2>
-          <p>Total de Leads</p>
+          <p>Total Leads</p>
         </div>
 
         <div style={cardPurple}>
@@ -198,230 +234,59 @@ Fico à disposição 🚀`
 
       </div>
 
-      {/* IMPORTAÇÃO */}
-
       <div style={boxStyle}>
 
         <h2>
-          Importar Clientes Inativos
+          Importar Clientes
         </h2>
 
         <p style={description}>
-          O sistema identifica automaticamente:
-          Razão Social, Telefone, CNPJ e E-mail da planilha.
+          Sistema identifica automaticamente:
+          Razão Social,
+          Telefone,
+          CNPJ
+          e E-mail.
         </p>
 
         <ImportarExcel />
 
-        <button style={importButton}>
-          Sistema faz leitura automática da planilha
-        </button>
-
       </div>
 
-      {/* FILTROS */}
+      <div style={boxStyle}>
 
-      <div style={filterBox}>
+        <h2>
+          Disparo de Campanha
+        </h2>
 
-        <input
-          placeholder='Pesquisar cliente...'
-          value={busca}
+        <textarea
+          value={mensagemCampanha}
           onChange={(e) =>
-            setBusca(
+            setMensagemCampanha(
               e.target.value
             )
           }
-          style={inputStyle}
+          style={textareaStyle}
         />
 
-        <select
-          value={filtroStatus}
-          onChange={(e) =>
-            setFiltroStatus(
-              e.target.value
-            )
-          }
-          style={selectStyle}
+        <button
+          onClick={dispararCampanha}
+          disabled={enviando}
+          style={campanhaButton}
         >
 
-          <option>
-            Todos
-          </option>
+          {
+            enviando
+              ? 'Disparando campanha...'
+              : 'Disparar Campanha'
+          }
 
-          <option>
-            Novo Lead
-          </option>
-
-          <option>
-            Negociação
-          </option>
-
-          <option>
-            Fechado
-          </option>
-
-        </select>
-
-      </div>
-
-      {/* TABELA */}
-
-      <div style={tableBox}>
-
-        <table style={tableStyle}>
-
-          <thead>
-
-            <tr>
-
-              <th style={thStyle}>
-                Empresa
-              </th>
-
-              <th style={thStyle}>
-                Telefone
-              </th>
-
-              <th style={thStyle}>
-                Status
-              </th>
-
-              <th style={thStyle}>
-                Ações
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {clientesFiltrados.map(
-              (cliente) => (
-
-                <tr
-                  key={cliente.id}
-                  style={rowStyle}
-                >
-
-                  <td style={tdStyle}>
-                    <strong>
-                      {
-                        cliente.razao_social
-                      }
-                    </strong>
-
-                    <br />
-
-                    <small>
-                      CNPJ:
-                      {
-                        cliente.cnpj
-                      }
-                    </small>
-
-                  </td>
-
-                  <td style={tdStyle}>
-                    {
-                      cliente.telefone
-                    }
-                  </td>
-
-                  <td style={tdStyle}>
-
-                    <span
-                      style={{
-                        ...statusBadge,
-
-                        background:
-                          cliente.status ===
-                          'Fechado'
-                            ? '#2563eb'
-                            : cliente.status ===
-                              'Negociação'
-                            ? '#ea580c'
-                            : '#2563eb'
-                      }}
-                    >
-                      {
-                        cliente.status
-                      }
-                    </span>
-
-                  </td>
-
-                  <td style={tdStyle}>
-
-                    <div style={buttonGroup}>
-
-                      <button
-                        onClick={() =>
-                          abrirWhatsapp(
-                            cliente.telefone,
-                            cliente.razao_social
-                          )
-                        }
-                        style={whatsappButton}
-                      >
-                        WhatsApp
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          atualizarStatus(
-                            cliente.id,
-                            'Negociação'
-                          )
-                        }
-                        style={negociacaoButton}
-                      >
-                        Negociação
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          atualizarStatus(
-                            cliente.id,
-                            'Fechado'
-                          )
-                        }
-                        style={fechadoButton}
-                      >
-                        Fechado
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          excluirCliente(
-                            cliente.id
-                          )
-                        }
-                        style={deleteButton}
-                      >
-                        Excluir
-                      </button>
-
-                    </div>
-
-                  </td>
-
-                </tr>
-
-              )
-            )}
-
-          </tbody>
-
-        </table>
+        </button>
 
       </div>
 
     </div>
   )
 }
-
-/* ESTILOS */
 
 const container = {
   minHeight: '100vh',
@@ -443,8 +308,7 @@ const subtitle = {
 
 const dashboardGrid = {
   display: 'grid',
-  gridTemplateColumns:
-    'repeat(4,1fr)',
+  gridTemplateColumns: 'repeat(4,1fr)',
   gap: '20px',
   marginTop: '35px'
 }
@@ -462,27 +326,11 @@ const description = {
   marginBottom: '25px'
 }
 
-const importButton = {
+const textareaStyle = {
   width: '100%',
-  marginTop: '25px',
+  minHeight: '180px',
   padding: '20px',
-  borderRadius: '14px',
-  border: 'none',
-  background: '#16a34a',
-  color: 'white',
-  fontWeight: 'bold',
-  fontSize: '18px'
-}
-
-const filterBox = {
-  marginTop: '35px',
-  display: 'flex',
-  gap: '15px'
-}
-
-const inputStyle = {
-  flex: 1,
-  padding: '18px',
+  marginTop: '20px',
   borderRadius: '14px',
   border: '1px solid #334155',
   background: '#0f172a',
@@ -490,89 +338,16 @@ const inputStyle = {
   fontSize: '16px'
 }
 
-const selectStyle = {
-  width: '220px',
-  padding: '18px',
-  borderRadius: '14px',
-  border: '1px solid #334155',
-  background: '#0f172a',
-  color: 'white'
-}
-
-const tableBox = {
-  background: '#111827',
-  marginTop: '35px',
-  borderRadius: '25px',
-  overflow: 'hidden'
-}
-
-const tableStyle = {
+const campanhaButton = {
   width: '100%',
-  borderCollapse: 'collapse' as const
-}
-
-const thStyle = {
-  textAlign: 'left' as const,
-  padding: '24px',
-  background: '#0f172a',
-  fontSize: '18px'
-}
-
-const tdStyle = {
-  padding: '24px'
-}
-
-const rowStyle = {
-  borderBottom:
-    '1px solid #1e293b'
-}
-
-const statusBadge = {
-  padding: '10px 18px',
-  borderRadius: '12px',
-  color: 'white',
-  fontWeight: 'bold'
-}
-
-const buttonGroup = {
-  display: 'flex',
-  gap: '10px',
-  flexWrap: 'wrap' as const
-}
-
-const whatsappButton = {
+  marginTop: '20px',
+  padding: '20px',
+  borderRadius: '14px',
+  border: 'none',
   background: '#16a34a',
-  border: 'none',
-  padding: '12px 18px',
-  borderRadius: '12px',
   color: 'white',
-  cursor: 'pointer'
-}
-
-const negociacaoButton = {
-  background: '#ea580c',
-  border: 'none',
-  padding: '12px 18px',
-  borderRadius: '12px',
-  color: 'white',
-  cursor: 'pointer'
-}
-
-const fechadoButton = {
-  background: '#2563eb',
-  border: 'none',
-  padding: '12px 18px',
-  borderRadius: '12px',
-  color: 'white',
-  cursor: 'pointer'
-}
-
-const deleteButton = {
-  background: '#dc2626',
-  border: 'none',
-  padding: '12px 18px',
-  borderRadius: '12px',
-  color: 'white',
+  fontWeight: 'bold',
+  fontSize: '18px',
   cursor: 'pointer'
 }
 
